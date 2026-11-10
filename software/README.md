@@ -121,6 +121,7 @@ Open a terminal in VS Code (**Terminal → New Terminal**). It should say `Power
 ```
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+cd software
 pip install -r requirements.txt
 ```
  
@@ -162,7 +163,7 @@ Use your own letters instead of `abcd`. The middle part (`w01-abcd`) is the **de
  
 ## 5. Run the demo
  
-### 4.0 One thing to know about terminals
+### 5.0 One thing to know about terminals
  
 Every terminal is separate. A setting loaded in one terminal does not exist in another. So **every new terminal** needs two things: the venv activated, and `.env` loaded. Load `.env` with this line (it also trims stray spaces, which once cost us an hour):
  
@@ -203,7 +204,7 @@ python -m dashboard.app
 ```
 Open http://localhost:5000 and sign in. Add yourself as a contact (name, phone with country code, Telegram chat id) and press **Send test alert**. Your phone should buzz and the dispatch log should show a green "sent".
 
-**Terminal 2 — motion demo**
+**Terminal 3 — motion demo**
 
 ```
 <loader line>
