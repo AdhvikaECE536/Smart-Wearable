@@ -114,59 +114,78 @@ sos/
 
 Python 3.10–3.12 (TensorFlow does not support newer versions).
 
+**Create the virtual environment and install**
+ 
+Open a terminal in VS Code (**Terminal → New Terminal**). It should say `PowerShell` and end in the project folder.
+ 
 ```
-cd sos
-python -m venv ..\run_environment        # skip if you already have one
-..\run_environment\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python -m tools.test_pipeline            # expect 9 PASS lines
-python -m tools.test_dashboard           # expect PASS dashboard
 ```
-
-**Get the model out of Colab.** Add this cell at the bottom of the notebook, after "LSTM trained on real train-users":
-
-```python
-lstm_real.save("model.keras")
-from google.colab import files
-files.download("model.keras")
-print(lstm_real.input_shape)      # must print (None, 5, 2)
+ 
+If PowerShell refuses to run the activate script ("running scripts is disabled"), run this once, then activate again:
 ```
-
-Put `model.keras` in `sos/`, next to `README.md`. Check it loads:
-`python -c "import tensorflow as tf; print(tf.keras.models.load_model('model.keras').input_shape)"`
-If loading fails with a version error, install the TensorFlow version Colab printed.
-
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
+When it worked, the prompt starts with `(.venv)`. **Every new terminal needs the venv activated.** The install takes a few minutes because TensorFlow is large.
+ 
+**Check that the install is sound**
+ 
+```
+python -m tools.test_pipeline
+python -m tools.test_dashboard
+```
+You want **11 `PASS` lines**, then `PASS dashboard`. If any line fails, stop and fix that first (section 15).
+ 
+**The model file**
+ 
+The repository should include `model.keras`, our trained LSTM (input shape 5×2, 5,059 parameters). Check it loads:
+ 
+```
+python -c "import tensorflow as tf; print(tf.keras.models.load_model('model.keras').input_shape)"
+```
+It must print `(None, 5, 2)`.
+ 
+If the file is missing, the server prints `using RuleModel fallback` and uses a crude speed-threshold rule instead. That is fine for a smoke test and **wrong for any result you report**. To make the file yourself, see section 11.3.
+ 
+**Create your `.env`**
+ 
+Copy `.env.example` to `.env` in the project folder (same folder as `cloud`). In PowerShell: `copy .env.example .env`. Open `.env` and change the topic to something unique to you:
+ 
+```
+UPLINK_TOPIC=sos/w01-abcd/uplink
+```
+Use your own letters instead of `abcd`. The middle part (`w01-abcd`) is the **device id**. It must match `DEVICE_ID` in the Wokwi sketch and the `--device` flag of the simulator. Section 7 explains every setting.
+ 
 ---
-
-## 5. Running the demo
-
-Each terminal needs the venv active **and** its own copy of the settings. Use this loader every time you open a new terminal (it trims stray spaces, which once cost us an hour):
-
+ 
+## 5. Run the demo
+ 
+### 4.0 One thing to know about terminals
+ 
+Every terminal is separate. A setting loaded in one terminal does not exist in another. So **every new terminal** needs two things: the venv activated, and `.env` loaded. Load `.env` with this line (it also trims stray spaces, which once cost us an hour):
+ 
 ```
 Get-Content .env | Where-Object {$_ -match '^\w+='} | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "env:$k" $v.Trim() }
 ```
-
-### `.env` (lives in `sos/`, same folder as `cloud/`)
-
+We call this **the loader** below. On Mac/Linux use `set -a; source .env; set +a`.
+ 
+### 5.1 Offline demo (no accounts, no network)
+ 
 ```
-HIVEMQ_HOST=broker.emqx.io
-HIVEMQ_PORT=1883
-HIVEMQ_TLS=0
-UPLINK_TOPIC=sos/w01-k7f3/uplink
-GEO_MODE=mock
-MODEL_PATH=model.keras
-TELEGRAM_TOKEN=<from BotFather>
-TELEGRAM_CHAT_ID=<your chat id>
+python -m tools.demo_offline
 ```
-
-No spaces around `=`, no comments. The topic must match `DEVICE_ID` in the sketch (`"w01-k7f3"` gives `sos/w01-k7f3/uplink`).
-
-### Loader Line
+It runs three scripted trips through the whole pipeline in one process: a person standing still (never red), a person on foot, and a vehicle (both go red). It uses the stand-in model if `model.keras` is missing.
+ 
+### 5.2 Full demo with three terminals
+ 
+**Prepare once.** Build the router database for the simulator (section 10 explains it):
 ```
-Get-Content .env | Where-Object {$_ -match '^\w+='} | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "env:$k" $v.Trim() }
+python -m tools.wifi_db synthetic --n 100000
 ```
-
-### Terminal 1 — server
+ 
+**Terminal 1 — the server** (venv active, then the loader):
 
 ```
 <loader line>
@@ -175,7 +194,7 @@ python -m cloud.server
 ```
 Wait for `[mqtt] connected: Success`. Leave it running.
 
-### Terminal 2 — dashboard
+**Terminal 2 — dashboard**
 
 ```
 <loader line>
@@ -184,16 +203,21 @@ python -m dashboard.app
 ```
 Open http://localhost:5000 and sign in. Add yourself as a contact (name, phone with country code, Telegram chat id) and press **Send test alert**. Your phone should buzz and the dispatch log should show a green "sent".
 
-### Terminal 3 — motion demo
+**Terminal 2 — motion demo**
 
 ```
 <loader line>
 python -m tools.simulate_device --scenario vehicle --period 10 --device w01-k7f3
 ```
-After about 60 s the banner flashes red, the map shows a trail, the 112 card appears, and Telegram gets "SOS pressed" then "THREAT CONFIRMED". Run `--scenario stationary` afterwards: it must never reach level 2.
+
+After about 60 s the banner flashes red, the map shows a trail, the 112 card appears, and Telegram gets "SOS pressed" then "THREAT CONFIRMED". 
+
+Run `python -m tools.simulate_device --scenario foot --device w01-k7f3` with the server running. The class changes to foot escape.
+
+Run `--scenario stationary` afterwards: it must never reach level 2.
 Keep `--period 10`. The server stamps packets with real time, so a faster period gives wrong speeds.
 
-### Wokwi (device half)
+### 5.3 Wokwi (device half)
 
 1. New ESP32-S3 project on wokwi.com; paste `sketch.ino`, `diagram.json`, `libraries.txt`. Keep the Wokwi tab in front — a background tab pauses the simulation.
 2. Run `python -m tools.wokwi_aps --lat 12.9716 --lon 77.5946` and paste the printed `const AP FAKE[3] = ...` line over the one in the sketch. These are mock-database routers, so Wokwi packets land on the map.
@@ -248,24 +272,5 @@ Telegram setup in short: @BotFather → `/newbot` → copy the token → message
 `python -m tools.test_dashboard`: login wall, CSRF, contact add and delete, 112 cannot be removed, the live feed reports level 2.
 
 Also run once through a real local MQTT broker (simulator → server → LSTM → red alert), and on your machine through the public EMQX broker with Wokwi and Telegram.
-
----
-
-## 9. What is hardcoded and what isn’t
-
-Hardcoded, meaning synthetic input:
-
-The trip in simlib.py. The vehicle moves in a straight line east at a constant 11 m/s from a fixed point in Bengaluru.
-The router positions, which are a fake grid of routers around that point, saved in mock_routers.json. That is why the fix source says mock.
-Wokwi, which pads its scan with 3 fixed fake addresses. It always reports the same spot, so on its own it only produces “stationary”.
-
-Not hardcoded, meaning real processing:
-
-Decoding the payload, the position lookup, the speed and acceleration maths, the LSTM, the gate, the latch, the banner and the Telegram alerts.
-
-
-To show it isn’t faked:
-
-Run `python -m tools.simulate_device --scenario foot --device w01-k7f3` with the server running. The class changes to foot escape. Then run --scenario stationary and the banner never turns red. 
 
 ---
