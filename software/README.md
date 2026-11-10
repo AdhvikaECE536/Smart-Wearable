@@ -268,9 +268,9 @@ Telegram setup in short: @BotFather → `/newbot` → copy the token → message
 
 ## 8. Tests and what they prove
 
-`python -m tools.test_pipeline` (9 tests): payload round-trip; a vehicle trip latches after two windows; a stationary wearer never goes red; dead-zone filling stops at its cap; unmatched routers fall back to dead reckoning; button-bounce packets are ignored; Wi-Fi jitter inside the reported error stays at level 1; the notifier sends press / threat / update in order; a raw MQTT message flows through `server.on_message`.
+`python -m tools.test_pipeline` (11 tests): payload round-trip; a vehicle trip latches after two windows; a stationary wearer never goes red; dead-zone filling stops at its cap; unmatched routers fall back to dead reckoning; button-bounce packets are ignored; Wi-Fi jitter inside the reported error stays at level 1; the notifier sends press / threat / update in order; a raw MQTT message flows through `server.on_message`; the local database imports a WiGLE file and locates from it; a walker stays a walker under `REPLAY_SPEED`.
 `python -m tools.test_dashboard`: login wall, CSRF, contact add and delete, 112 cannot be removed, the live feed reports level 2.
-
+ 
 Also run once through a real local MQTT broker (simulator → server → LSTM → red alert), and on your machine through the public EMQX broker with Wokwi and Telegram.
 
 ---
