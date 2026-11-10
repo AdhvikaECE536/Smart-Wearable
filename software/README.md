@@ -13,8 +13,7 @@ Project: *Stand-Alone Wearable Safety Device with Hybrid Location Triangulation 
 
 1. What is **real**: the MQTT transport, the server, the trained LSTM (`model.keras`), the dashboard, and Telegram delivery.
 2. What is **simulated**: the wearable (Wokwi, not hardware), the Wi-Fi router database (a mock one), and the motion scenarios (generated, not walked).
-3. What is **not done**: hardware, the cellular modem path, a live Unwired Labs lookup, and any field test. Section 10 lists these honestly.
-
+3. What is **not done**: hardware, the cellular modem path, a live Unwired Labs lookup, and any field test. 
 Plain-English numbers worth remembering:
 
 | Fact | In plain English |
@@ -137,7 +136,7 @@ When it worked, the prompt starts with `(.venv)`. **Every new terminal needs the
 python -m tools.test_pipeline
 python -m tools.test_dashboard
 ```
-You want **11 `PASS` lines**, then `PASS dashboard`. If any line fails, stop and fix that first (section 15).
+You want **11 `PASS` lines**, then `PASS dashboard`. 
  
 **The model file**
  
@@ -148,7 +147,7 @@ python -c "import tensorflow as tf; print(tf.keras.models.load_model('model.kera
 ```
 It must print `(None, 5, 2)`.
  
-If the file is missing, the server prints `using RuleModel fallback` and uses a crude speed-threshold rule instead. That is fine for a smoke test and **wrong for any result you report**. To make the file yourself, see section 11.3.
+If the file is missing, the server prints `using RuleModel fallback` and uses a crude speed-threshold rule instead. That is fine for a smoke test and **wrong for any result you report**. 
  
 **Create your `.env`**
  
@@ -157,7 +156,7 @@ Copy `.env.example` to `.env` in the project folder (same folder as `cloud`). In
 ```
 UPLINK_TOPIC=sos/w01-abcd/uplink
 ```
-Use your own letters instead of `abcd`. The middle part (`w01-abcd`) is the **device id**. It must match `DEVICE_ID` in the Wokwi sketch and the `--device` flag of the simulator. Section 7 explains every setting.
+Use your own letters instead of `abcd`. The middle part (`w01-abcd`) is the **device id**. It must match `DEVICE_ID` in the Wokwi sketch and the `--device` flag of the simulator. 
  
 ---
  
@@ -181,7 +180,7 @@ It runs three scripted trips through the whole pipeline in one process: a person
  
 ### 5.2 Full demo with three terminals
  
-**Prepare once.** Build the router database for the simulator (section 10 explains it):
+**Prepare once.** Build the router database for the simulator:
 ```
 python -m tools.wifi_db synthetic --n 100000
 ```
