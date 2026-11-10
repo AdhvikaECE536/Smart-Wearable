@@ -1,0 +1,9 @@
+[
+ {
+  "id": "112",
+  "name": "Emergency 112 (India ERSS)",
+  "phone": "112",
+  "type": "emergency",
+  "relation": "Police / Fire / Ambulance"
+ }
+]
