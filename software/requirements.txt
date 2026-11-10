@@ -1,0 +1,5 @@
+paho-mqtt>=2.0
+requests
+numpy
+tensorflow-cpu>=2.15   # only needed for the real LSTM; everything else runs without it
+flask>=3.0
